@@ -4,9 +4,13 @@ frontend/node_modules/
 backend/venv/
 venv/
 
-# Environment Variables
+# Environment Variables & API Keys
 .env
+.env.*
+*.env
 backend/.env
+backend/.env.*
+backend/.env.example
 
 # Python
 __pycache__/
@@ -23,6 +27,3 @@ backend/database/*.db
 # OS
 .DS_Store
 Thumbs.db
-
-# Build outputs (Vercel builds automatically)
-# frontend/dist
