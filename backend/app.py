@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 
 # Add backend directory to sys.path
@@ -25,8 +25,11 @@ def create_app():
     # Enable CORS for frontend Vite dev server & production builds
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-    # Ensure database tables exist
-    init_db()
+    # Ensure database tables exist safely
+    try:
+        init_db()
+    except Exception as e:
+        print(f"Warning during init_db: {e}")
 
     # Register API blueprints
     app.register_blueprint(auth_bp)
@@ -46,6 +49,27 @@ def create_app():
             'openai_configured': Config.has_openai_key(),
             'serpapi_configured': Config.has_serpapi_key(),
             'environment': os.getenv('FLASK_ENV', 'development')
+        })
+
+    # Serve built frontend for direct visits
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve(path):
+        if path.startswith('api/'):
+            return jsonify({'error': 'API endpoint not found'}), 404
+        
+        static_dir = Path(__file__).resolve().parent.parent / 'frontend' / 'dist'
+        if not static_dir.exists():
+            static_dir = Path(__file__).resolve().parent / 'static'
+            
+        if (static_dir / path).exists() and path != '':
+            return send_from_directory(static_dir, path)
+        if (static_dir / 'index.html').exists():
+            return send_from_directory(static_dir, 'index.html')
+            
+        return jsonify({
+            'status': 'LearnPath AI API is running',
+            'health': '/api/health'
         })
 
     return app

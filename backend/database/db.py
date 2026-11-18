@@ -9,15 +9,24 @@ from config import Config
 
 def get_db_connection():
     db_path = Config.DATABASE_PATH
-    os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
+    except OSError:
+        # Fallback to /tmp if current directory is read-only
+        db_path = "/tmp/learning_agent.db"
+    
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
 def init_db():
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+    except Exception as e:
+        print(f"Warning: Could not connect to database during init_db: {e}")
+        return
 
     # Users Table
     cursor.execute('''

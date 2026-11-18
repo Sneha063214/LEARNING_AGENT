@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/venv/
+venv/
+
+# Environment Variables
+.env
+backend/.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Databases
+*.db
+*.sqlite3
+backend/database/*.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs (Vercel builds automatically)
+# frontend/dist
