@@ -31,8 +31,15 @@ export default function Layout({ activeSubjectId, setActiveSubjectId }) {
 
   const pageTitle = PAGE_TITLES[location.pathname] || 'LearnPath AI';
 
+  useEffect(() => {
+    document.title = `${pageTitle} | LearnPath AI`;
+  }, [pageTitle]);
+
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Sidebar user={user} />
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar
@@ -40,7 +47,16 @@ export default function Layout({ activeSubjectId, setActiveSubjectId }) {
           onSubjectChange={setActiveSubjectId}
           pageTitle={pageTitle}
         />
-        <main className="flex-1 p-8 overflow-y-auto">
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          Navigated to {pageTitle}
+        </div>
+        <main
+          id="main-content"
+          role="main"
+          aria-label={pageTitle}
+          tabIndex={-1}
+          className="flex-1 p-8 overflow-y-auto focus:outline-none"
+        >
           <Outlet context={{ activeSubjectId, setActiveSubjectId, user, setUser }} />
         </main>
       </div>

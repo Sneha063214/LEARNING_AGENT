@@ -1,225 +1,229 @@
-import React, { useState, useEffect } from 'react';
-import { useOutletContext, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { 
   AlertTriangle, 
   CheckCircle2, 
+  AlertCircle, 
   HelpCircle, 
-  Clock, 
-  ArrowRight, 
   Bot, 
-  Sparkles, 
-  Target,
-  Filter,
-  Layers,
-  ChevronRight
+  ArrowRight, 
+  Sparkles,
+  Layers
 } from 'lucide-react';
 import { api } from '../services/api';
 
 export default function GapAnalysisPage() {
   const { activeSubjectId } = useOutletContext();
-  const [data, setData] = useState(null);
-  const [filter, setFilter] = useState('all'); // 'all', 'Weak', 'Moderate', 'Strong'
+  const [gapData, setGapData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [filterLevel, setFilterLevel] = useState('All');
+  const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
     api.getGapAnalysis(activeSubjectId)
-      .then(setData)
+      .then(setGapData)
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [activeSubjectId]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-72 text-slate-400 text-sm">
-        <Sparkles className="w-5 h-5 animate-spin text-brand-500 mr-2" />
-        Analyzing persistent knowledge gaps...
+      <div role="status" aria-live="polite" className="p-8 text-center text-xs text-slate-600">
+        Analyzing topic proficiency and knowledge gaps...
       </div>
     );
   }
 
-  const allTopics = data?.all_evaluated_topics || [];
-  const filteredTopics = filter === 'all' 
-    ? allTopics 
-    : allTopics.filter((t) => t.proficiency_level === filter);
+  const topics = gapData?.topics || [];
+  const filteredTopics = filterLevel === 'All'
+    ? topics
+    : topics.filter((t) => t.proficiency_level === filterLevel);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      {/* Header */}
-      <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-semibold mb-2 border border-red-200/50">
-          <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-          Module 3: Knowledge Gap Detection Engine
-        </div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-          Knowledge Gap Matrix & Diagnostics
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Objective classification of your conceptual proficiency derived directly from verified assessment scores.
-        </p>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="p-5 bg-white rounded-xl border border-slate-200/80 shadow-sm">
-          <span className="text-xs font-medium text-slate-500">Total Assessed</span>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{data?.total_assessed || 0}</p>
-          <p className="text-[11px] text-slate-400 mt-1">Concepts evaluated</p>
-        </div>
-
-        <div className="p-5 bg-white rounded-xl border border-red-200/80 bg-red-50/20 shadow-sm">
+      {/* Summary Header Cards */}
+      <section aria-label="Knowledge Gap Summary Counts" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <article className="bg-white p-6 rounded-2xl border border-red-200/80 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-red-800">Critical Gaps</span>
-            <span className="w-2 h-2 rounded-full bg-red-500"></span>
+            <span className="text-xs font-bold uppercase tracking-wider text-red-700">Weak (&lt;50%)</span>
+            <AlertTriangle className="w-5 h-5 text-red-600" aria-hidden="true" />
           </div>
-          <p className="text-2xl font-bold text-red-600 mt-1">{data?.counts?.weak || 0}</p>
-          <p className="text-[11px] text-red-500/80 mt-1">Score &lt; 60% (High Priority)</p>
-        </div>
+          <div className="text-3xl font-bold text-slate-900 mt-3">
+            {gapData?.summary?.weak_count || 0}
+          </div>
+          <p className="text-xs text-slate-600 mt-1">Critical priority remediation required</p>
+        </article>
 
-        <div className="p-5 bg-white rounded-xl border border-amber-200/80 bg-amber-50/20 shadow-sm">
+        <article className="bg-white p-6 rounded-2xl border border-amber-200/80 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-amber-800">Moderate Understanding</span>
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-700">Moderate (50–75%)</span>
+            <AlertCircle className="w-5 h-5 text-amber-600" aria-hidden="true" />
           </div>
-          <p className="text-2xl font-bold text-amber-600 mt-1">{data?.counts?.moderate || 0}</p>
-          <p className="text-[11px] text-amber-500/80 mt-1">Score 60% – 79% (Needs Review)</p>
-        </div>
+          <div className="text-3xl font-bold text-slate-900 mt-3">
+            {gapData?.summary?.moderate_count || 0}
+          </div>
+          <p className="text-xs text-slate-600 mt-1">Needs targeted practice &amp; reinforcement</p>
+        </article>
 
-        <div className="p-5 bg-white rounded-xl border border-emerald-200/80 bg-emerald-50/20 shadow-sm">
+        <article className="bg-white p-6 rounded-2xl border border-emerald-200/80 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-emerald-800">Demonstrated Mastery</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Strong (&gt;75%)</span>
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" aria-hidden="true" />
           </div>
-          <p className="text-2xl font-bold text-emerald-600 mt-1">{data?.counts?.strong || 0}</p>
-          <p className="text-[11px] text-emerald-500/80 mt-1">Score &ge; 80% (Verified Strong)</p>
-        </div>
-      </div>
+          <div className="text-3xl font-bold text-slate-900 mt-3">
+            {gapData?.summary?.strong_count || 0}
+          </div>
+          <p className="text-xs text-slate-600 mt-1">Ready for advanced enrichment challenges</p>
+        </article>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <article className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Unassessed</span>
+            <HelpCircle className="w-5 h-5 text-slate-500" aria-hidden="true" />
+          </div>
+          <div className="text-3xl font-bold text-slate-900 mt-3">
+            {gapData?.summary?.unassessed_count || 0}
+          </div>
+          <p className="text-xs text-slate-600 mt-1">Awaiting initial diagnostic evaluation</p>
+        </article>
+      </section>
+
+      {/* Filter Bar */}
+      <section aria-labelledby="gap-filter-heading" className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          {['all', 'Weak', 'Moderate', 'Strong'].map((f) => (
+          <Layers className="w-4 h-4 text-brand-600" aria-hidden="true" />
+          <h2 id="gap-filter-heading" className="text-sm font-bold text-slate-900">
+            Module 3: Topic-Level Knowledge Gap Classification
+          </h2>
+        </div>
+
+        <div role="group" aria-label="Filter topics by proficiency classification" className="flex flex-wrap items-center gap-2">
+          {['All', 'Weak', 'Moderate', 'Strong', 'Unassessed'].map((lvl) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              key={lvl}
+              type="button"
+              aria-pressed={filterLevel === lvl}
+              onClick={() => setFilterLevel(lvl)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                filter === f
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                filterLevel === lvl
+                  ? 'bg-brand-600 text-white shadow-2xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
-              {f === 'all' ? 'All Concepts' : `${f} (${allTopics.filter((t) => t.proficiency_level === f).length})`}
+              {lvl}
             </button>
           ))}
         </div>
+      </section>
 
-        <span className="text-xs text-slate-400">
-          Showing {filteredTopics.length} of {allTopics.length} topics
-        </span>
-      </div>
+      {/* Topic Gap Cards */}
+      <section aria-label="Classified Topics List" className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {filteredTopics.map((topic) => {
+          const badgeStyle =
+            topic.proficiency_level === 'Weak'
+              ? 'bg-red-50 text-red-800 border-red-200'
+              : topic.proficiency_level === 'Moderate'
+              ? 'bg-amber-50 text-amber-800 border-amber-200'
+              : topic.proficiency_level === 'Strong'
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+              : 'bg-slate-100 text-slate-700 border-slate-200';
 
-      {/* Topic Cards Grid */}
-      {filteredTopics.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
-          <Target className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-          <h4 className="text-sm font-semibold text-slate-700">No concepts found in this filter</h4>
-          <p className="text-xs text-slate-400 mt-1">
-            Complete a diagnostic assessment to generate proficiency ratings for this subject.
-          </p>
-          <Link
-            to="/diagnostic"
-            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 text-white text-xs font-semibold hover:bg-brand-500 shadow-sm"
-          >
-            <span>Take Diagnostic Assessment</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {filteredTopics.map((item) => {
-            const isWeak = item.proficiency_level === 'Weak';
-            const isModerate = item.proficiency_level === 'Moderate';
+          const barColor =
+            topic.proficiency_level === 'Weak'
+              ? 'bg-red-500'
+              : topic.proficiency_level === 'Moderate'
+              ? 'bg-amber-500'
+              : topic.proficiency_level === 'Strong'
+              ? 'bg-emerald-500'
+              : 'bg-slate-300';
 
-            return (
-              <div
-                key={item.topic_id}
-                className={`p-6 rounded-2xl bg-white border transition-all ${
-                  isWeak
-                    ? 'border-red-200/90 shadow-sm hover:shadow-md'
-                    : isModerate
-                    ? 'border-amber-200/90 shadow-sm hover:shadow-md'
-                    : 'border-slate-200/80 shadow-sm hover:shadow-md'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4 mb-3">
+          const scoreValue = topic.attempts_count > 0 ? topic.average_score : 0;
+
+          return (
+            <article
+              key={topic.topic_id}
+              aria-labelledby={`topic-heading-${topic.topic_id}`}
+              className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-2xs flex flex-col justify-between space-y-5"
+            >
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                      {item.subject_name}
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Module {topic.order_index} • {topic.difficulty}
                     </span>
-                    <h3 className="text-base font-bold text-slate-900 mt-0.5">{item.topic_name}</h3>
+                    <h3 id={`topic-heading-${topic.topic_id}`} className="text-base font-bold text-slate-900 mt-0.5">
+                      {topic.topic_name}
+                    </h3>
                   </div>
-
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-xs font-bold border shrink-0 ${
-                      isWeak
-                        ? 'bg-red-50 text-red-700 border-red-200'
-                        : isModerate
-                        ? 'bg-amber-50 text-amber-700 border-amber-200'
-                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    }`}
-                  >
-                    {item.proficiency_level} &bull; {item.score_percentage}%
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold border shrink-0 ${badgeStyle}`}>
+                    {topic.proficiency_level}
                   </span>
                 </div>
 
-                {/* Performance Diagnosis */}
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-1 mb-4">
-                  <p className="font-semibold text-slate-800">
-                    {isWeak
-                      ? 'Detected Knowledge Gap:'
-                      : isModerate
-                      ? 'Review Recommendation:'
-                      : 'Mastery Status:'}
-                  </p>
-                  <p className="text-slate-600 leading-relaxed">
-                    {isWeak
-                      ? `Scored ${item.score_percentage}% across ${item.total_attempts} attempt(s). Student struggles with core primitives and edge-case execution.`
-                      : isModerate
-                      ? `Scored ${item.score_percentage}%. Solid grasp of fundamental theory but occasional errors in application.`
-                      : `Scored ${item.score_percentage}%. Demonstrates consistent accuracy and comprehension.`}
-                  </p>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {topic.description}
+                </p>
+
+                {/* Mastery Bar */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span id={`mastery-label-${topic.topic_id}`} className="text-slate-600 font-medium">
+                      Mastery Score ({topic.attempts_count} attempt{topic.attempts_count === 1 ? '' : 's'})
+                    </span>
+                    <span className="font-bold text-slate-900">
+                      {topic.attempts_count > 0 ? `${topic.average_score}%` : 'Not tested'}
+                    </span>
+                  </div>
+                  <div
+                    role="progressbar"
+                    aria-labelledby={`mastery-label-${topic.topic_id}`}
+                    aria-valuenow={scoreValue}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    className="w-full h-2 bg-slate-100 rounded-full overflow-hidden"
+                  >
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                      style={{ width: `${Math.min(100, scoreValue)}%` }}
+                    />
+                  </div>
                 </div>
 
-                {/* Footer Meta & Actions */}
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
-                  <div className="flex items-center gap-3 text-slate-400 text-[11px]">
-                    <span>{item.difficulty_level}</span>
-                    <span>&bull;</span>
-                    <span>~{item.estimated_minutes} min study</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Link
-                      to="/tutor"
-                      className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold text-xs flex items-center gap-1 transition-colors"
-                    >
-                      <Bot className="w-3.5 h-3.5" />
-                      <span>Ask Tutor</span>
-                    </Link>
-                    <Link
-                      to="/quiz"
-                      className="px-3 py-1.5 rounded-lg bg-brand-600 text-white hover:bg-brand-500 font-semibold text-xs flex items-center gap-1 transition-colors shadow-sm"
-                    >
-                      <span>Quiz</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </Link>
-                  </div>
+                {/* Remediation Guidance Pill */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex items-start gap-2.5">
+                  <Sparkles className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" aria-hidden="true" />
+                  <p className="text-xs text-slate-700 leading-relaxed">
+                    <strong className="text-slate-900">AI Action Plan: </strong>
+                    {topic.recommended_action}
+                  </p>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigate('/tutor', { state: { topicId: topic.topic_id } })}
+                  aria-label={`Learn ${topic.topic_name} with AI Tutor`}
+                  className="px-3.5 py-2 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <Bot className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Learn with AI Tutor</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/quiz', { state: { topicId: topic.topic_id } })}
+                  aria-label={`Take practice quiz for ${topic.topic_name}`}
+                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <span>Take Topic Quiz</span>
+                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </section>
     </div>
   );
 }

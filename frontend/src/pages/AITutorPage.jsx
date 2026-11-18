@@ -4,14 +4,8 @@ import {
   Bot, 
   Send, 
   Sparkles, 
-  BookOpen, 
-  Code2, 
-  HelpCircle, 
   RefreshCw, 
-  User, 
-  Lightbulb, 
-  Layers,
-  ChevronRight
+  User
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -27,16 +21,12 @@ export default function AITutorPage() {
   const { activeSubjectId, user } = useOutletContext();
   const [topics, setTopics] = useState([]);
   const [selectedTopicId, setSelectedTopicId] = useState('');
-  
-  // Tabs: 'chat' vs 'explain'
   const [activeTab, setActiveTab] = useState('chat');
 
-  // Chat State
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
 
-  // Concept Deep Dive State
   const [explanation, setExplanation] = useState(null);
   const [explainLoading, setExplainLoading] = useState(false);
 
@@ -71,7 +61,7 @@ export default function AITutorPage() {
         })
         .catch(console.error);
     }
-  }, [selectedTopicId, topics]);
+  }, [selectedTopicId, topics, user?.name]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -129,7 +119,7 @@ export default function AITutorPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-semibold mb-2 border border-brand-200/50">
-            <Bot className="w-3.5 h-3.5 text-brand-600" />
+            <Bot className="w-3.5 h-3.5 text-brand-600" aria-hidden="true" />
             Module 5: Interactive AI Learning Assistant
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -140,8 +130,12 @@ export default function AITutorPage() {
         {/* Topic Context Dropdown */}
         {topics.length > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-500">Topic:</span>
+            <label htmlFor="tutor-topic-select" className="text-xs font-medium text-slate-600">
+              Topic:
+            </label>
             <select
+              id="tutor-topic-select"
+              aria-label="Select topic for AI Tutor"
               value={selectedTopicId}
               onChange={(e) => setSelectedTopicId(Number(e.target.value))}
               className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
@@ -157,18 +151,28 @@ export default function AITutorPage() {
       </div>
 
       {/* Mode Tabs */}
-      <div className="flex bg-slate-100 p-1 rounded-xl max-w-sm">
+      <div role="tablist" aria-label="AI Tutor Modes" className="flex bg-slate-100 p-1 rounded-xl max-w-sm">
         <button
+          type="button"
+          role="tab"
+          id="tab-chat"
+          aria-selected={activeTab === 'chat'}
+          aria-controls="panel-chat"
           onClick={() => setActiveTab('chat')}
           className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
             activeTab === 'chat'
               ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-500 hover:text-slate-800'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           Conversational Tutor
         </button>
         <button
+          type="button"
+          role="tab"
+          id="tab-explain"
+          aria-selected={activeTab === 'explain'}
+          aria-controls="panel-explain"
           onClick={() => {
             setActiveTab('explain');
             if (!explanation) handleDeepDiveExplain();
@@ -176,7 +180,7 @@ export default function AITutorPage() {
           className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
             activeTab === 'explain'
               ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-500 hover:text-slate-800'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           Structured Deep-Dive
@@ -185,15 +189,21 @@ export default function AITutorPage() {
 
       {/* TAB 1: Conversational Chat */}
       {activeTab === 'chat' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col h-[650px] overflow-hidden">
+        <section
+          id="panel-chat"
+          role="tabpanel"
+          aria-labelledby="tab-chat"
+          className="bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col h-[650px] overflow-hidden"
+        >
           {/* Quick Prompt Chips */}
-          <div className="p-3 border-b border-slate-100 bg-slate-50/70 overflow-x-auto flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0 ml-1">
+          <div className="p-3 border-b border-slate-100 bg-slate-50/70 overflow-x-auto flex items-center gap-2" role="group" aria-label="Suggested quick prompts">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 shrink-0 ml-1">
               Suggestions:
             </span>
             {QUICK_PROMPTS.map((prompt, idx) => (
               <button
                 key={idx}
+                type="button"
                 onClick={() => handleSendMessage(prompt)}
                 disabled={chatLoading}
                 className="shrink-0 px-2.5 py-1 text-[11px] font-medium bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition-all shadow-2xs whitespace-nowrap"
@@ -204,7 +214,12 @@ export default function AITutorPage() {
           </div>
 
           {/* Chat Messages Log */}
-          <div className="flex-1 p-6 overflow-y-auto space-y-4">
+          <div
+            role="log"
+            aria-live="polite"
+            aria-label="Conversation history with AI Tutor"
+            className="flex-1 p-6 overflow-y-auto space-y-4"
+          >
             {messages.map((msg, idx) => {
               const isAssistant = msg.sender === 'assistant';
               return (
@@ -213,6 +228,7 @@ export default function AITutorPage() {
                   className={`flex items-start gap-3 ${isAssistant ? '' : 'flex-row-reverse'}`}
                 >
                   <div
+                    aria-hidden="true"
                     className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${
                       isAssistant
                         ? 'bg-brand-600 text-white shadow-xs'
@@ -229,6 +245,7 @@ export default function AITutorPage() {
                         : 'bg-brand-600 text-white shadow-sm'
                     }`}
                   >
+                    <span className="sr-only">{isAssistant ? 'AI Tutor:' : 'You:'} </span>
                     {msg.message}
                   </div>
                 </div>
@@ -236,12 +253,12 @@ export default function AITutorPage() {
             })}
 
             {chatLoading && (
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0">
+              <div role="status" aria-live="polite" className="flex items-center gap-3">
+                <div aria-hidden="true" className="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0">
                   <Bot className="w-4 h-4" />
                 </div>
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs text-slate-500 flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 animate-spin text-brand-600" />
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs text-slate-600 flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 animate-spin text-brand-600" aria-hidden="true" />
                   <span>LearnPath AI Tutor is analyzing and formulating response...</span>
                 </div>
               </div>
@@ -258,50 +275,63 @@ export default function AITutorPage() {
               }}
               className="flex items-center gap-2"
             >
+              <label htmlFor="tutor-chat-input" className="sr-only">
+                Ask your tutor a question
+              </label>
               <input
+                id="tutor-chat-input"
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 placeholder="Ask your tutor anything about this concept..."
+                aria-label="Ask your tutor anything about this concept"
                 className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
               />
               <button
                 type="submit"
+                aria-label="Send message to AI Tutor"
                 disabled={!inputMessage.trim() || chatLoading}
                 className="p-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white transition-all shadow-md shadow-brand-500/20 disabled:opacity-50"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-4 h-4" aria-hidden="true" />
               </button>
             </form>
           </div>
-        </div>
+        </section>
       )}
 
       {/* TAB 2: Structured Deep-Dive */}
       {activeTab === 'explain' && (
-        <div className="bg-white p-8 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+        <section
+          id="panel-explain"
+          role="tabpanel"
+          aria-labelledby="tab-explain"
+          className="bg-white p-8 rounded-2xl border border-slate-200/80 shadow-sm space-y-6"
+        >
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
               <h3 className="text-base font-bold text-slate-900">
                 Pedagogical Breakdown: {topics.find((t) => t.id === Number(selectedTopicId))?.name || 'Concept'}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600">
                 Tailored for {user?.education_level || 'Undergraduate'} level
               </p>
             </div>
             <button
+              type="button"
               onClick={handleDeepDiveExplain}
               disabled={explainLoading}
+              aria-label="Refresh concept breakdown"
               className="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-colors"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${explainLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${explainLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
               <span>Refresh Breakdown</span>
             </button>
           </div>
 
           {explainLoading ? (
-            <div className="text-center py-16 text-slate-400 text-xs flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4 animate-spin text-brand-600" />
+            <div role="status" aria-live="polite" className="text-center py-16 text-slate-500 text-xs flex items-center justify-center gap-2">
+              <Sparkles className="w-4 h-4 animate-spin text-brand-600" aria-hidden="true" />
               <span>Synthesizing structured pedagogical breakdown...</span>
             </div>
           ) : (
@@ -309,7 +339,7 @@ export default function AITutorPage() {
               {explanation?.content}
             </div>
           )}
-        </div>
+        </section>
       )}
     </div>
   );
