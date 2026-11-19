@@ -7,20 +7,30 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import Config
 
+_DB_READY = False
+
 def get_db_connection():
+    global _DB_READY
     db_path = Config.DATABASE_PATH
     try:
         os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
     except OSError:
         db_path = "/tmp/learning_agent.db"
-    
+
+    needs_init = (not os.path.exists(db_path)) or (not _DB_READY)
     conn = sqlite3.connect(db_path, timeout=15.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
     conn.execute("PRAGMA journal_mode = WAL;")
     conn.execute("PRAGMA synchronous = NORMAL;")
     conn.execute("PRAGMA temp_store = MEMORY;")
+
+    if needs_init:
+        _DB_READY = True
+        _bootstrap_schema_and_seed(conn)
     return conn
+
+
 
 def init_db():
     try:
