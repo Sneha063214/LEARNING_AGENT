@@ -26,19 +26,21 @@ def get_db_connection():
     conn.execute("PRAGMA temp_store = MEMORY;")
 
     if needs_init:
-        _DB_READY = True
         _bootstrap_schema_and_seed(conn)
+        _DB_READY = True
     return conn
-
 
 
 def init_db():
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        conn.close()
     except Exception as e:
         print(f"Warning: Could not connect to database during init_db: {e}")
-        return
+
+
+def _bootstrap_schema_and_seed(conn):
+    cursor = conn.cursor()
 
     # Users Table
     cursor.execute('''
@@ -246,7 +248,6 @@ def init_db():
     conn.commit()
     seed_initial_data(conn)
     seed_demo_student(conn)
-    conn.close()
 
 def seed_initial_data(conn):
     cursor = conn.cursor()
