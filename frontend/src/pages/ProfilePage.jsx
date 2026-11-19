@@ -14,6 +14,7 @@ export default function ProfilePage() {
   const [interests, setInterests] = useState(user?.interests || []);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const toggleInterest = (subj) => {
     setInterests((prev) =>
@@ -23,6 +24,7 @@ export default function ProfilePage() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
     setSaved(false);
     try {
@@ -37,7 +39,7 @@ export default function ProfilePage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      alert(`Failed to update profile: ${err.message}`);
+      setError(`Failed to update profile: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -62,6 +64,12 @@ export default function ProfilePage() {
             <p className="text-xs text-slate-600">{user?.email}</p>
           </div>
         </div>
+
+        {error && (
+          <div role="alert" aria-live="assertive" className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+            {error}
+          </div>
+        )}
 
         {saved && (
           <div role="status" aria-live="polite" className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">

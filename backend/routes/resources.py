@@ -9,40 +9,44 @@ resources_bp = Blueprint('resources', __name__, url_prefix='/api/resources')
 def get_resources():
     user_id = get_current_user_id()
     topic_id = request.args.get('topic_id', type=int)
+    search_query = request.args.get('query', '').strip()
 
     conn = get_db_connection()
+    try:
+        topic_name = "Python Programming Fundamentals"
+        subject_name = "Computer Science"
+        weak_reason = ""
 
-    topic_name = "Python Programming Fundamentals"
-    subject_name = "Computer Science"
-    weak_reason = ""
+        if search_query:
+            topic_name = search_query[:120]
+            subject_name = "STEM & Computer Science"
+            weak_reason = f"Custom resource discovery matching '{topic_name}'."
+        elif topic_id:
+            t_row = conn.execute('''
+                SELECT t.name as topic_name, s.name as subject_name
+                FROM topics t
+                JOIN subjects s ON t.subject_id = s.id
+                WHERE t.id = ?
+            ''', (topic_id,)).fetchone()
+            if t_row:
+                topic_name = t_row['topic_name']
+                subject_name = t_row['subject_name']
+        else:
+            weak_topic = conn.execute('''
+                SELECT t.id, t.name as topic_name, s.name as subject_name, tp.score_percentage
+                FROM topic_proficiency tp
+                JOIN topics t ON tp.topic_id = t.id
+                JOIN subjects s ON t.subject_id = s.id
+                WHERE tp.user_id = ? AND tp.proficiency_level = 'Weak'
+                ORDER BY tp.score_percentage ASC LIMIT 1
+            ''', (user_id,)).fetchone()
 
-    if topic_id:
-        t_row = conn.execute('''
-            SELECT t.name as topic_name, s.name as subject_name
-            FROM topics t
-            JOIN subjects s ON t.subject_id = s.id
-            WHERE t.id = ?
-        ''', (topic_id,)).fetchone()
-        if t_row:
-            topic_name = t_row['topic_name']
-            subject_name = t_row['subject_name']
-    else:
-        # Check if the user has any weak topics
-        weak_topic = conn.execute('''
-            SELECT t.id, t.name as topic_name, s.name as subject_name, tp.score_percentage
-            FROM topic_proficiency tp
-            JOIN topics t ON tp.topic_id = t.id
-            JOIN subjects s ON t.subject_id = s.id
-            WHERE tp.user_id = ? AND tp.proficiency_level = 'Weak'
-            ORDER BY tp.score_percentage ASC LIMIT 1
-        ''', (user_id,)).fetchone()
-
-        if weak_topic:
-            topic_name = weak_topic['topic_name']
-            subject_name = weak_topic['subject_name']
-            weak_reason = f"Recommended to address knowledge gap in {topic_name} (Current Score: {weak_topic['score_percentage']}%)."
-
-    conn.close()
+            if weak_topic:
+                topic_name = weak_topic['topic_name']
+                subject_name = weak_topic['subject_name']
+                weak_reason = f"Recommended to address knowledge gap in {topic_name} (Current Score: {weak_topic['score_percentage']}%)."
+    finally:
+        conn.close()
 
     resources = SearchService.get_learning_resources_for_topic(
         topic_name=topic_name,

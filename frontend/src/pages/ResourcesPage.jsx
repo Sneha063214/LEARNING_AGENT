@@ -19,6 +19,7 @@ export default function ResourcesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [liveResults, setLiveResults] = useState(null);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -32,12 +33,13 @@ export default function ResourcesPage() {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
+    setSearchError('');
     setSearching(true);
     try {
       const res = await api.searchResources(searchQuery);
       setLiveResults(res);
     } catch (err) {
-      alert(`Search failed: ${err.message}`);
+      setSearchError(`Search failed: ${err.message}`);
     } finally {
       setSearching(false);
     }
@@ -85,6 +87,12 @@ export default function ResourcesPage() {
             <span>{searching ? 'Searching...' : 'Discover Resources'}</span>
           </button>
         </form>
+
+        {searchError && (
+          <div role="alert" aria-live="assertive" className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">
+            {searchError}
+          </div>
+        )}
       </section>
 
       {/* Live Web Search Results (if triggered) */}

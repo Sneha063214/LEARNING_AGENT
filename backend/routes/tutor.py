@@ -9,11 +9,13 @@ tutor_bp = Blueprint('tutor', __name__, url_prefix='/api/tutor')
 def tutor_chat():
     user_id = get_current_user_id()
     data = request.get_json() or {}
-    message = data.get('message', '').strip()
+    raw_message = data.get('message', '').strip()
     topic_id = data.get('topic_id')
     
-    if not message:
+    if not raw_message:
         return jsonify({'error': 'Message content is required'}), 400
+
+    message = AIService.sanitize_user_input(raw_message, max_length=1000)
 
     conn = get_db_connection()
     cursor = conn.cursor()

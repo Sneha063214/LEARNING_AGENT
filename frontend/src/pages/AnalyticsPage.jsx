@@ -43,9 +43,9 @@ export default function AnalyticsPage() {
   const subjectStats = data?.subject_stats || [];
 
   const pieData = [
-    { name: 'Weak (<50%)', value: summary.weak_gaps || 0 },
-    { name: 'Moderate (50-75%)', value: summary.moderate_gaps || 0 },
-    { name: 'Strong (>75%)', value: summary.strong_mastery || 0 },
+    { name: 'Weak (<60%)', value: summary.weak_gaps || 0 },
+    { name: 'Moderate (60-79%)', value: summary.moderate_gaps || 0 },
+    { name: 'Strong (≥80%)', value: summary.strong_mastery || 0 },
   ];
 
   return (
@@ -101,7 +101,7 @@ export default function AnalyticsPage() {
             <Award className="w-4 h-4 text-amber-500" aria-hidden="true" />
           </div>
           <div className="text-3xl font-bold text-slate-900 mt-3">{summary.strong_mastery || 0}</div>
-          <p className="text-xs text-slate-600 mt-1">Topics with &gt;75% verified score</p>
+          <p className="text-xs text-slate-600 mt-1">Topics with &ge;80% verified score</p>
         </article>
       </section>
 

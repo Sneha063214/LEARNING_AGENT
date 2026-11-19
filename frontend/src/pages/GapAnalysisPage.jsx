@@ -46,7 +46,7 @@ export default function GapAnalysisPage() {
       <section aria-label="Knowledge Gap Summary Counts" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <article className="bg-white p-6 rounded-2xl border border-red-200/80 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-red-700">Weak (&lt;50%)</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-red-700">Weak (&lt;60%)</span>
             <AlertTriangle className="w-5 h-5 text-red-600" aria-hidden="true" />
           </div>
           <div className="text-3xl font-bold text-slate-900 mt-3">
@@ -57,7 +57,7 @@ export default function GapAnalysisPage() {
 
         <article className="bg-white p-6 rounded-2xl border border-amber-200/80 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-700">Moderate (50–75%)</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-700">Moderate (60–79%)</span>
             <AlertCircle className="w-5 h-5 text-amber-600" aria-hidden="true" />
           </div>
           <div className="text-3xl font-bold text-slate-900 mt-3">
@@ -68,7 +68,7 @@ export default function GapAnalysisPage() {
 
         <article className="bg-white p-6 rounded-2xl border border-emerald-200/80 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Strong (&gt;75%)</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Strong (&ge;80%)</span>
             <CheckCircle2 className="w-5 h-5 text-emerald-600" aria-hidden="true" />
           </div>
           <div className="text-3xl font-bold text-slate-900 mt-3">

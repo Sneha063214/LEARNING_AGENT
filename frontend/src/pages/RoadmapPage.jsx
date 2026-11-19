@@ -9,7 +9,8 @@ import {
   RefreshCw, 
   Bot, 
   HelpCircle, 
-  Bookmark
+  Bookmark,
+  Download
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -84,16 +85,30 @@ export default function RoadmapPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleRegenerate}
-            disabled={regenerating}
-            aria-label="Re-calibrate and regenerate adaptive learning roadmap"
-            className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center gap-2 self-start shrink-0 transition-all"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${regenerating ? 'animate-spin' : ''}`} aria-hidden="true" />
-            <span>{regenerating ? 'Re-calibrating...' : 'Re-Calibrate Path'}</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2.5 self-start shrink-0">
+            {roadmap?.id && (
+              <a
+                href={api.getDownloadPdfUrl(roadmap.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Download personalized learning roadmap as PDF report"
+                className="px-4 py-2.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold text-xs flex items-center gap-2 border border-brand-200 transition-all"
+              >
+                <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Export PDF</span>
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              disabled={regenerating}
+              aria-label="Re-calibrate and regenerate adaptive learning roadmap"
+              className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center gap-2 transition-all"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${regenerating ? 'animate-spin' : ''}`} aria-hidden="true" />
+              <span>{regenerating ? 'Re-calibrating...' : 'Re-Calibrate Path'}</span>
+            </button>
+          </div>
         </div>
 
         {/* Progress Bar */}

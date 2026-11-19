@@ -43,6 +43,10 @@ def create_app() -> Flask:
         client_ip = request.remote_addr or "127.0.0.1"
         now = time.time()
         window_start = now - RATE_LIMIT_WINDOW_SECONDS
+        if len(_RATE_LIMIT_STORE) > 2000:
+            stale_ips = [ip for ip, stamps in _RATE_LIMIT_STORE.items() if not stamps or stamps[-1] <= window_start]
+            for ip in stale_ips:
+                del _RATE_LIMIT_STORE[ip]
         requests_in_window = [ts for ts in _RATE_LIMIT_STORE[client_ip] if ts > window_start]
         if len(requests_in_window) >= RATE_LIMIT_MAX_REQUESTS:
             return jsonify({"error": "Rate limit exceeded. Please retry shortly."}), 429

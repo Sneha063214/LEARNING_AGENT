@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
@@ -17,35 +18,37 @@ export default function App() {
   const [activeSubjectId, setActiveSubjectId] = useState(1);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Marketing & Auth */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/auth" element={<AuthPage />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Marketing & Auth */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<AuthPage />} />
 
-        {/* Protected Dashboard Experience */}
-        <Route
-          element={
-            <Layout
-              activeSubjectId={activeSubjectId}
-              setActiveSubjectId={setActiveSubjectId}
-            />
-          }
-        >
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/diagnostic" element={<DiagnosticPage />} />
-          <Route path="/gaps" element={<GapAnalysisPage />} />
-          <Route path="/roadmap" element={<RoadmapPage />} />
-          <Route path="/tutor" element={<AITutorPage />} />
-          <Route path="/quiz" element={<QuizPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/resources" element={<ResourcesPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-        </Route>
+          {/* Protected Dashboard Experience */}
+          <Route
+            element={
+              <Layout
+                activeSubjectId={activeSubjectId}
+                setActiveSubjectId={setActiveSubjectId}
+              />
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/diagnostic" element={<DiagnosticPage />} />
+            <Route path="/gaps" element={<GapAnalysisPage />} />
+            <Route path="/roadmap" element={<RoadmapPage />} />
+            <Route path="/tutor" element={<AITutorPage />} />
+            <Route path="/quiz" element={<QuizPage />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/resources" element={<ResourcesPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+          </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

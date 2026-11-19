@@ -25,6 +25,7 @@ export default function QuizPage() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (activeSubjectId) {
@@ -40,6 +41,7 @@ export default function QuizPage() {
   }, [activeSubjectId]);
 
   const handleGenerateQuiz = async () => {
+    setError('');
     setLoading(true);
     setQuiz(null);
     setResult(null);
@@ -54,7 +56,7 @@ export default function QuizPage() {
       });
       setQuiz(data);
     } catch (err) {
-      alert(`Failed to generate quiz: ${err.message}`);
+      setError(`Failed to generate quiz: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -64,12 +66,13 @@ export default function QuizPage() {
     e.preventDefault();
     if (!quiz) return;
 
+    setError('');
     setSubmitting(true);
     try {
       const res = await api.submitAssessment(quiz.assessment_id, { answers });
       setResult(res);
     } catch (err) {
-      alert(`Error submitting quiz: ${err.message}`);
+      setError(`Error submitting quiz: ${err.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -91,6 +94,12 @@ export default function QuizPage() {
             </p>
           </div>
         </div>
+
+        {error && (
+          <div role="alert" aria-live="assertive" className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">
+            {error}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2">

@@ -632,11 +632,56 @@ class AIService:
             except Exception as e:
                 logger.error(f"OpenAI chat error: {e}")
 
-        # 3. Guided fallback response when no API key is set
-        last_msg = sanitized_messages[-1]["content"] if sanitized_messages else ""
+        # 3. Context-Aware Socratic Offline Tutor Fallback (works seamlessly without paid API keys)
+        last_msg = (sanitized_messages[-1]["content"] if sanitized_messages else "").lower()
+        topic_questions = VERIFIED_QUESTION_BANK.get(topic_name, [])
+        sample_q = topic_questions[0] if topic_questions else None
+
+        if "analogy" in last_msg or "intuitive" in last_msg:
+            return (
+                f"### Intuitive Analogy for {safe_topic}\n\n"
+                f"Think of **{safe_topic}** like an automated railway switchboard:\n"
+                f"- Just as a switchboard routes trains onto deterministic tracks based on capacity and signals, "
+                f"**{safe_topic}** governs how data and control flow predictably through your program.\n\n"
+                f"**Socratic Check:** Can you identify one boundary input that might challenge this flow?"
+            )
+        if "code" in last_msg or "example" in last_msg:
+            slug = re.sub(r"[^a-zA-Z0-9]", "_", safe_topic.lower())[:24].strip("_") or "concept"
+            return (
+                f"### Commented Code Pattern: {safe_topic}\n\n"
+                f"```python\n"
+                f"def apply_{slug}(items):\n"
+                f"    # 1. Guard clause for empty or invalid edge-case input\n"
+                f"    if not items:\n"
+                f"        return []\n"
+                f"    # 2. Core deterministic transformation\n"
+                f"    return [item for item in items if item is not None]\n"
+                f"```\n\n"
+                f"**Key Takeaway:** Always validate boundary conditions first before executing core logic."
+            )
+        if "mistake" in last_msg or "pitfall" in last_msg:
+            return (
+                f"### Common Pitfalls in {safe_topic}\n\n"
+                f"1. **Boundary Neglect:** Overlooking empty inputs (`[]`, `None`, `0`) or off-by-one indexing.\n"
+                f"2. **Unintended State Mutation:** Modifying shared mutable references in-place.\n"
+                f"3. **Asymptotic Overhead:** Nesting operations that degrade $O(n)$ into $O(n^2)$."
+            )
+        if ("practice" in last_msg or "problem" in last_msg or "test" in last_msg) and sample_q:
+            opts = "\n".join([f"- {o}" for o in sample_q["options"]])
+            return (
+                f"### Practice Challenge: {safe_topic}\n\n"
+                f"**Question:** {sample_q['question_text']}\n\n"
+                f"{opts}\n\n"
+                f"*Tip: Visit the **Quizzes & Practice** module to record your answer toward your mastery score!*"
+            )
+
+        explanation_hint = (
+            sample_q["explanation"]
+            if sample_q
+            else f"Mastering **{safe_topic}** requires understanding both its structural invariants and edge-case trade-offs."
+        )
         return (
-            f"Hello! I am your AI Learning Assistant for **{safe_topic}**.\n\n"
-            f"You asked: *\"{last_msg}\"*\n\n"
-            f"To enable real-time conversational streaming with Google Gemini 1.5, please configure `GEMINI_API_KEY` in `backend/.env`.\n\n"
-            f"In the meantime, remember the core principle of **{safe_topic}**: break down complex problems into smaller subproblems, trace your inputs step-by-step, and test boundary conditions!"
+            f"### Socratic Breakdown: {safe_topic} ({safe_level})\n\n"
+            f"{explanation_hint}\n\n"
+            f"**Next Step:** Use the quick prompt chips above to request a real-world analogy, commented code pattern, common pitfalls, or a practice challenge!"
         )
