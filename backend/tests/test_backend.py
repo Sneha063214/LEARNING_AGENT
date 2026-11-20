@@ -6,14 +6,16 @@ learning workflows across all 8 backend blueprints and core AI engines.
 import os
 import sys
 from pathlib import Path
+
 import pytest
 
 # Add backend directory to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import create_app
 from services.ai_service import AIService
 from services.gap_engine import KnowledgeGapEngine
+
+from app import create_app
 
 
 @pytest.fixture
@@ -124,8 +126,11 @@ def test_user_auth_and_profile_update_flow(client):
         "/api/auth/login",
         json={"email": unique_email, "password": "password123"},
     )
+    from routes.auth import verify_signed_token
+
     assert login_resp.status_code == 200
-    assert login_resp.get_json()["token"] == token
+    login_token = login_resp.get_json()["token"]
+    assert verify_signed_token(login_token) == reg_data["user"]["id"]
 
     # 4. Login with wrong password should return 401
     bad_login = client.post(
@@ -353,3 +358,43 @@ def test_signed_token_roundtrip_and_tamper_fallback(client):
     assert "." in token
     assert verify_signed_token(token) == 42
     assert verify_signed_token("tampered.invalid.token") == 1
+
+
+def test_db_session_context_manager_and_seed_integrity():
+    """Verifies db_session closes cleanly and curriculum seed tables are populated."""
+    from database.db import db_session
+
+    with db_session() as conn:
+        subj_count = conn.execute("SELECT COUNT(*) FROM subjects").fetchone()[0]
+        topic_count = conn.execute("SELECT COUNT(*) FROM topics").fetchone()[0]
+        assert subj_count >= 4
+        assert topic_count >= 20
+
+
+def test_recommendation_deduplication_and_roadmap_sync(client):
+    """Verifies repeated weak assessments deduplicate unapplied recommendations."""
+    from database.db import db_session
+
+    headers = {"Authorization": "Bearer 1"}
+    for _ in range(2):
+        gen = client.post(
+            "/api/assessment/generate",
+            json={"subject_id": 1, "topic_id": 2, "assessment_type": "quiz", "count": 3},
+            headers=headers,
+        ).get_json()
+        wrong = [{"question_id": q["id"], "selected_answer": "Wrong"} for q in gen["questions"]]
+        sub = client.post(
+            "/api/assessment/submit",
+            json={"assessment_id": gen["assessment_id"], "answers": wrong},
+            headers=headers,
+        )
+        assert sub.status_code == 200
+
+    with db_session() as conn:
+        dup_count = conn.execute(
+            """
+            SELECT COUNT(*) FROM adaptive_recommendations
+            WHERE user_id = 1 AND topic_id = 2 AND recommendation_type = 'revisit_concept' AND is_applied = 0
+            """
+        ).fetchone()[0]
+        assert dup_count <= 1

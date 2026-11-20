@@ -31,6 +31,12 @@ exclude = ["venv", ".venv", "__pycache__", "frontend/node_modules", "frontend/di
 select = ["E", "F", "W", "I", "B", "S"]
 ignore = ["E501"]
 
+[tool.ruff.lint.per-file-ignores]
+"backend/tests/*" = ["S101", "S105", "S106", "E402"]
+"backend/database/*" = ["S106", "S108", "E402"]
+"backend/config.py" = ["S108"]
+"backend/app.py" = ["E402"]
+
 [tool.black]
 line-length = 100
 target-version = ["py310"]

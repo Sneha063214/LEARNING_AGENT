@@ -3,11 +3,12 @@ PDF Generation Service
 Generates professional, printable, and downloadable learning roadmaps and progress reports
 using FPDF2.
 """
-import io
 import datetime
+from typing import Any, Dict, List
+
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
-from typing import Dict, List, Any
+
 
 class LearningReportPDF(FPDF):
     def header(self):

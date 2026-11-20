@@ -1,8 +1,10 @@
+import logging
 import os
 import sys
 import time
 from collections import defaultdict
 from pathlib import Path
+
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -10,14 +12,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from config import Config
 from database.db import init_db
-from routes.auth import auth_bp
-from routes.subjects import subjects_bp
-from routes.assessment import assessment_bp
-from routes.roadmap import roadmap_bp
-from routes.gap import gap_bp
-from routes.tutor import tutor_bp
 from routes.analytics import analytics_bp
+from routes.assessment import assessment_bp
+from routes.auth import auth_bp
+from routes.gap import gap_bp
 from routes.resources import resources_bp
+from routes.roadmap import roadmap_bp
+from routes.subjects import subjects_bp
+from routes.tutor import tutor_bp
 
 # Lightweight sliding-window rate limiter store
 _RATE_LIMIT_STORE = defaultdict(list)
@@ -31,10 +33,11 @@ def create_app() -> Flask:
     # Restricted CORS policy with explicit origins
     CORS(app, resources={r"/api/*": {"origins": Config.ALLOWED_ORIGINS}})
 
+    logger = logging.getLogger(__name__)
     try:
         init_db()
-    except Exception as e:
-        print(f"Warning during init_db: {e}")
+    except Exception as exc:
+        logger.warning("Database initialization warning: %s", exc)
 
     @app.before_request
     def enforce_rate_limit():
@@ -97,16 +100,16 @@ def create_app() -> Flask:
     def serve(path: str):
         if path.startswith('api/'):
             return jsonify({'error': 'API endpoint not found'}), 404
-        
+
         static_dir = Path(__file__).resolve().parent.parent / 'frontend' / 'dist'
         if not static_dir.exists():
             static_dir = Path(__file__).resolve().parent / 'static'
-            
+
         if (static_dir / path).exists() and path != '':
             return send_from_directory(static_dir, path)
         if (static_dir / 'index.html').exists():
             return send_from_directory(static_dir, 'index.html')
-            
+
         return jsonify({
             'status': 'LearnPath AI API is running',
             'health': '/api/health'
@@ -119,5 +122,5 @@ app = create_app()
 if __name__ == '__main__':
     port = Config.PORT
     host = os.getenv('FLASK_RUN_HOST', '127.0.0.1')
-    print(f"LearnPath AI Backend starting on http://{host}:{port}")
+    logging.getLogger(__name__).info("LearnPath AI Backend starting on http://%s:%s", host, port)
     app.run(host=host, port=port, debug=Config.DEBUG)

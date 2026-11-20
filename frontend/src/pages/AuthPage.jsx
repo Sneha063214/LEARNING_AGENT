@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GraduationCap, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 import { api, setAuthToken, setCurrentUser } from '../services/api';
 
-const EDUCATION_LEVELS = ['High School', 'Undergraduate', 'Graduate', 'Self-Learner', 'Professional'];
-const AVAILABLE_SUBJECTS = ['Python Programming', 'Data Structures & Algorithms', 'Machine Learning Foundations', 'Web Development'];
+import { EDUCATION_LEVELS, AVAILABLE_SUBJECTS } from '../constants/curriculum';
 
 export default function AuthPage() {
   const [isRegister, setIsRegister] = useState(false);

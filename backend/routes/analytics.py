@@ -1,44 +1,48 @@
+"""Learning Analytics and Student Progress Dashboard Blueprint."""
+from database.db import db_session
 from flask import Blueprint, jsonify
-from database.db import get_db_connection
 from routes.auth import get_current_user_id
 from services.recommendation import AdaptiveRecommendationEngine
 
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
 
+
 @analytics_bp.route('/dashboard', methods=['GET'])
 def get_dashboard_analytics():
+    """Aggregates student performance timeline, mastery distribution, and subject metrics via SQL."""
     user_id = get_current_user_id()
-    conn = get_db_connection()
+    with db_session() as conn:
+        # 1. Fetch completed assessments via indexed SQL query
+        assessments_rows = conn.execute('''
+            SELECT a.id, a.subject_id, a.topic_id, a.title, a.assessment_type, a.correct_answers,
+                   a.total_questions, a.score_percentage, a.knowledge_gap_level, a.completed_at,
+                   s.name as subject_name, COALESCE(t.name, 'Subject Diagnostic') as topic_name
+            FROM assessments a
+            JOIN subjects s ON a.subject_id = s.id
+            LEFT JOIN topics t ON a.topic_id = t.id
+            WHERE a.user_id = ? AND a.status = 'completed'
+            ORDER BY a.completed_at ASC
+        ''', (user_id,)).fetchall()
 
-    # 1. Fetch completed assessments via indexed SQL query
-    assessments_rows = conn.execute('''
-        SELECT a.id, a.subject_id, a.topic_id, a.title, a.assessment_type, a.correct_answers,
-               a.total_questions, a.score_percentage, a.knowledge_gap_level, a.completed_at,
-               s.name as subject_name, COALESCE(t.name, 'Subject Diagnostic') as topic_name
-        FROM assessments a
-        JOIN subjects s ON a.subject_id = s.id
-        LEFT JOIN topics t ON a.topic_id = t.id
-        WHERE a.user_id = ? AND a.status = 'completed'
-        ORDER BY a.completed_at ASC
-    ''', (user_id,)).fetchall()
+        # 2. Aggregate topic proficiencies directly in SQL
+        prof_rows = conn.execute('''
+            SELECT proficiency_level, COUNT(*) as cnt
+            FROM topic_proficiency
+            WHERE user_id = ?
+            GROUP BY proficiency_level
+        ''', (user_id,)).fetchall()
+        prof_counts = {r['proficiency_level']: r['cnt'] for r in prof_rows}
 
-    # 2. Aggregate topic proficiencies directly in SQL
-    prof_rows = conn.execute('''
-        SELECT proficiency_level, COUNT(*) as cnt
-        FROM topic_proficiency
-        WHERE user_id = ?
-        GROUP BY proficiency_level
-    ''', (user_id,)).fetchall()
-    prof_counts = {r['proficiency_level']: r['cnt'] for r in prof_rows}
+        # 3. Aggregate learning tasks stats directly in SQL
+        task_stats = conn.execute('''
+            SELECT COUNT(*) as total_tasks,
+                   SUM(CASE WHEN lpt.status = 'completed' THEN 1 ELSE 0 END) as completed_tasks
+            FROM learning_path_tasks lpt
+            JOIN learning_paths lp ON lpt.learning_path_id = lp.id
+            WHERE lp.user_id = ?
+        ''', (user_id,)).fetchone()
 
-    # 3. Aggregate learning tasks stats directly in SQL
-    task_stats = conn.execute('''
-        SELECT COUNT(*) as total_tasks,
-               SUM(CASE WHEN lpt.status = 'completed' THEN 1 ELSE 0 END) as completed_tasks
-        FROM learning_path_tasks lpt
-        JOIN learning_paths lp ON lpt.learning_path_id = lp.id
-        WHERE lp.user_id = ?
-    ''', (user_id,)).fetchone()
+        recommendations = AdaptiveRecommendationEngine.get_active_recommendations(conn, user_id, limit=5)
 
     total_assessments = len(assessments_rows)
     avg_score = round(
@@ -77,9 +81,6 @@ def get_dashboard_analytics():
         }
         for subj_name, scores in subject_groups.items()
     ]
-
-    recommendations = AdaptiveRecommendationEngine.get_active_recommendations(conn, user_id, limit=5)
-    conn.close()
 
     return jsonify({
         'summary': {

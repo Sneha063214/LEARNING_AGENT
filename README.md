@@ -4,9 +4,10 @@
 
 ---
 
-## 1. Problem Statement Alignment & Multi-Agent Architecture
+## 1. Chosen Vertical, Problem Statement Alignment & Multi-Agent Architecture
 
-**Challenge Objective:**
+- **Chosen Vertical:** Personalized Education & Adaptive STEM Learning Agent (`Student / Technical Learner Persona`)
+- **Challenge Objective:**
 > *"Build an intelligent learning agent that identifies knowledge gaps, creates personalized learning paths, generates assessments, and adapts recommendations based on student progress."*
 
 LearnPath AI orchestrates **4 Specialized Pedagogical Agents** over a persistent SQLite knowledge graph:
@@ -83,8 +84,23 @@ npm install
 npm run dev
 ```
 
-### 3. Run the 16-Test Automated Verification Suite
+### 3. Run Automated Verification Suites (Backend Pytest + Ruff + Frontend Vitest)
 ```bash
-cd backend
-pytest tests/test_backend.py -v
+# Backend static lint & 18-test verification suite
+ruff check backend/
+pytest backend/tests/test_backend.py -v
+
+# Frontend unit & component tests + production build
+cd frontend
+npm test
+npm run build
 ```
+
+---
+
+## 5. Key Assumptions & Design Trade-offs
+
+- **Zero-Key Offline Resilience:** Evaluators and students may run the platform without paid LLM/search credentials. When `GEMINI_API_KEY`, `OPENAI_API_KEY`, or `SERPAPI_API_KEY` are absent, the platform deterministically falls back to the verified curriculum question bank (`backend/data/question_bank.py`), Socratic Offline Tutor Engine, and curated educational references.
+- **Serverless SQLite Persistence:** On local environments, data persists in `backend/database/learning_agent.db`. In stateless serverless environments (Vercel), SQLite automatically initializes and seeds in `/tmp/learning_agent.db` via `db_session()` with Write-Ahead Logging (`WAL`).
+- **Mastery Thresholds:** Topic proficiency follows explainable rubric boundaries (`Weak < 60%`, `Moderate 60–79%`, `Strong >= 80%`) synchronized across both backend engines and frontend visualizations.
+- **Single-Branch Workflow:** All production, frontend, backend, and CI/CD artifacts live cleanly within a single unified `main` branch.

@@ -7,8 +7,7 @@ import {
   XCircle, 
   ArrowRight, 
   RefreshCw,
-  Award,
-  AlertTriangle
+  Award
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -25,6 +24,7 @@ export default function DiagnosticPage() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [confirmIncomplete, setConfirmIncomplete] = useState(false);
 
   const navigate = useNavigate();
 
@@ -72,28 +72,30 @@ export default function DiagnosticPage() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const submitAnswers = async () => {
     if (!assessment) return;
-
-    const unanswered = assessment.questions.filter((q) => !answers[q.id]);
-    if (unanswered.length > 0) {
-      if (!window.confirm(`You have ${unanswered.length} unanswered question(s). Submit anyway?`)) {
-        return;
-      }
-    }
-
+    setConfirmIncomplete(false);
     setSubmitting(true);
     try {
-      const res = await api.submitAssessment(assessment.assessment_id, {
-        answers,
-      });
+      const res = await api.submitAssessment(assessment.assessment_id, { answers });
       setResult(res);
     } catch (err) {
       setError(err.message || 'Failed to submit assessment');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!assessment) return;
+
+    const unanswered = assessment.questions.filter((q) => !answers[q.id]);
+    if (unanswered.length > 0 && !confirmIncomplete) {
+      setConfirmIncomplete(true);
+      return;
+    }
+    await submitAnswers();
   };
 
   return (
@@ -278,6 +280,35 @@ export default function DiagnosticPage() {
               </fieldset>
             ))}
           </div>
+
+          {confirmIncomplete && (
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900"
+            >
+              <span>
+                You still have unanswered questions. Submit anyway or review your responses first?
+              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setConfirmIncomplete(false)}
+                  className="px-3 py-1.5 rounded-lg bg-white border border-amber-300 font-semibold text-amber-900 hover:bg-amber-100"
+                >
+                  Continue Reviewing
+                </button>
+                <button
+                  type="button"
+                  onClick={submitAnswers}
+                  disabled={submitting}
+                  className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                >
+                  Submit Anyway
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
             <button

@@ -3,9 +3,11 @@ Adaptive Recommendation Engine
 Continuously monitors student performance, detects repeated struggles or rapid mastery,
 recommends prerequisite remediation, elevates difficulty, and keeps learning paths synchronized.
 """
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from services.gap_engine import KnowledgeGapEngine
 from services.roadmap_engine import LearningPathEngine
+
 
 class AdaptiveRecommendationEngine:
 
@@ -83,7 +85,7 @@ class AdaptiveRecommendationEngine:
                     "recommendation_type": "revisit_concept",
                     "title": f"Targeted Concept Revisit: {topic_name}",
                     "reason": f"You have attempted '{topic_name}' {total_attempts} times and score is currently {score_pct}%.",
-                    "suggested_action": f"Use the interactive AI Learning Assistant to break down difficult concepts and review curated video tutorials."
+                    "suggested_action": "Use the interactive AI Learning Assistant to break down difficult concepts and review curated video tutorials."
                 }
                 generated_recommendations.append(rec)
 
@@ -95,7 +97,7 @@ class AdaptiveRecommendationEngine:
                     "recommendation_type": "gap_closed",
                     "title": f"Great Job! Knowledge Gap Closed for {topic_name}",
                     "reason": f"You improved from 'Weak' to '{new_level}' with a score of {score_pct}%.",
-                    "suggested_action": f"Your roadmap has been updated. Continue with the next scheduled milestone."
+                    "suggested_action": "Your roadmap has been updated. Continue with the next scheduled milestone."
                 }
                 generated_recommendations.append(rec)
 
@@ -107,16 +109,34 @@ class AdaptiveRecommendationEngine:
                     "recommendation_type": "increase_difficulty",
                     "title": f"Advance to Hard Challenges: {topic_name}",
                     "reason": f"High mastery demonstrated ({score_pct}%). You are ready for higher-order problem solving.",
-                    "suggested_action": f"Take the Hard difficulty quiz or advance to subsequent dependent concepts."
+                    "suggested_action": "Take the Hard difficulty quiz or advance to subsequent dependent concepts."
                 }
                 generated_recommendations.append(rec)
 
-        # 7. Persist recommendations into database
+        # 7. Persist recommendations into database with deduplication
         for rec in generated_recommendations:
-            cursor.execute('''
-                INSERT INTO adaptive_recommendations (user_id, topic_id, recommendation_type, title, reason, suggested_action)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (rec["user_id"], rec["topic_id"], rec["recommendation_type"], rec["title"], rec["reason"], rec["suggested_action"]))
+            cursor.execute(
+                """
+                DELETE FROM adaptive_recommendations
+                WHERE user_id = ? AND topic_id = ? AND recommendation_type = ? AND is_applied = 0
+                """,
+                (rec["user_id"], rec["topic_id"], rec["recommendation_type"]),
+            )
+            cursor.execute(
+                """
+                INSERT INTO adaptive_recommendations (
+                    user_id, topic_id, recommendation_type, title, reason, suggested_action
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    rec["user_id"],
+                    rec["topic_id"],
+                    rec["recommendation_type"],
+                    rec["title"],
+                    rec["reason"],
+                    rec["suggested_action"],
+                ),
+            )
 
         conn.commit()
 

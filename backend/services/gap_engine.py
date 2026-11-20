@@ -3,8 +3,8 @@ Knowledge Gap Detection Engine
 Analyzes student assessment answers, calculates topic accuracy, classifies into Strong/Moderate/Weak,
 and produces explainable reasoning based on student performance.
 """
-from typing import Dict, List, Any
-import json
+from typing import Any, Dict, List
+
 
 class KnowledgeGapEngine:
     STRONG_THRESHOLD = 80.0
@@ -21,7 +21,7 @@ class KnowledgeGapEngine:
             return "Weak"
 
     @classmethod
-    def analyze_assessment(cls, total_questions: int, correct_count: int, 
+    def analyze_assessment(cls, total_questions: int, correct_count: int,
                            topic_name: str, incorrect_questions: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Analyzes an assessment submission and generates an explainable knowledge gap report.
@@ -41,21 +41,21 @@ class KnowledgeGapEngine:
                     f"Struggled on fundamental question concepts, including: {', '.join(missed_topics)}"
                 )
             reasons.append(
-                f"Needs foundational review and targeted practice problems before advancing to dependent concepts."
+                "Needs foundational review and targeted practice problems before advancing to dependent concepts."
             )
         elif level == "Moderate":
             reasons.append(
                 f"Scored {score_pct}% ({correct_count}/{total_questions} correct). Demonstrates basic understanding but lacks consistency."
             )
             reasons.append(
-                f"Reviewing missed problem types and practicing edge cases is recommended to reach full mastery (>80%)."
+                "Reviewing missed problem types and practicing edge cases is recommended to reach full mastery (>80%)."
             )
         else:
             reasons.append(
                 f"Scored {score_pct}% ({correct_count}/{total_questions} correct). Solid conceptual comprehension and problem-solving execution."
             )
             reasons.append(
-                f"Ready for advanced challenges and subsequent dependent topics in the curriculum."
+                "Ready for advanced challenges and subsequent dependent topics in the curriculum."
             )
 
         return {

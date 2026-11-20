@@ -3,8 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { User, CheckCircle, Save } from 'lucide-react';
 import { api, setCurrentUser } from '../services/api';
 
-const EDUCATION_LEVELS = ['High School', 'Undergraduate', 'Graduate', 'Self-Learner', 'Professional'];
-const SUBJECT_LIST = ['Python Programming', 'Data Structures & Algorithms', 'Machine Learning Foundations', 'Web Development'];
+import { EDUCATION_LEVELS, AVAILABLE_SUBJECTS as SUBJECT_LIST } from '../constants/curriculum';
 
 export default function ProfilePage() {
   const { user, setUser } = useOutletContext();

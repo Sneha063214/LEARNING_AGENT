@@ -3,11 +3,11 @@ Learning Resources & SerpAPI Search Service
 Finds articles, official documentation, tutorials, and YouTube educational videos
 using SerpAPI, and summarizes relevance using OpenAI.
 """
-import requests
 import logging
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
+import requests
 from config import Config
-from services.ai_service import AIService
 
 logger = logging.getLogger(__name__)
 

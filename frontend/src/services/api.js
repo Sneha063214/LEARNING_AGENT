@@ -57,7 +57,7 @@ async function request(endpoint, options = {}) {
 }
 
 // Helper to normalize assessment answers whether passed as an Object map {qId: ans} or Array
-function normalizeAssessmentSubmission(firstArg, secondArg) {
+export function normalizeAssessmentSubmission(firstArg, secondArg) {
   let assessment_id = null;
   let rawAnswers = {};
 
@@ -126,7 +126,7 @@ export const api = {
   // Knowledge Gaps (normalizes backend response shape for both Dashboard & GapAnalysisPage)
   getGapAnalysis: (subjectId) =>
     request(`/gap-analysis${subjectId ? `?subject_id=${subjectId}` : ''}`).then((res) => {
-      const rawTopics = res.topics || res.topic_gaps || [];
+      const rawTopics = res.topics || res.topic_gaps || res.all_evaluated_topics || [];
       const topics = rawTopics.map((t, idx) => ({
         ...t,
         topic_id: t.topic_id || t.id || idx + 1,

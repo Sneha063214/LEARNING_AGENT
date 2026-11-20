@@ -29,6 +29,7 @@ export default function AITutorPage() {
 
   const [explanation, setExplanation] = useState(null);
   const [explainLoading, setExplainLoading] = useState(false);
+  const [explainError, setExplainError] = useState('');
 
   const messagesEndRef = useRef(null);
 
@@ -100,6 +101,7 @@ export default function AITutorPage() {
   };
 
   const handleDeepDiveExplain = async () => {
+    setExplainError('');
     setExplainLoading(true);
     try {
       const res = await api.explainConcept({
@@ -107,7 +109,7 @@ export default function AITutorPage() {
       });
       setExplanation(res);
     } catch (err) {
-      alert(`Error fetching concept explanation: ${err.message}`);
+      setExplainError(`Error fetching concept explanation: ${err.message}`);
     } finally {
       setExplainLoading(false);
     }
@@ -328,6 +330,12 @@ export default function AITutorPage() {
               <span>Refresh Breakdown</span>
             </button>
           </div>
+
+          {explainError && (
+            <div role="alert" aria-live="assertive" className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">
+              {explainError}
+            </div>
+          )}
 
           {explainLoading ? (
             <div role="status" aria-live="polite" className="text-center py-16 text-slate-500 text-xs flex items-center justify-center gap-2">
